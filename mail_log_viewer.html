@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メール送信ログ確認 - エンタメ就活.com</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <h1 class="text-2xl font-bold text-gray-900">メール送信ログ確認</h1>
+                    <a href="index.html" class="text-blue-600 hover:text-blue-800">← サイトに戻る</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">送信ログ一覧</h2>
+                    <div class="flex gap-4">
+                        <button id="refreshBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            更新
+                        </button>
+                        <button id="clearLogBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            ログクリア
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 統計情報 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600" id="totalCount">-</div>
+                        <div class="text-sm text-blue-600">総送信数</div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600" id="successCount">-</div>
+                        <div class="text-sm text-green-600">成功数</div>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-red-600" id="errorCount">-</div>
+                        <div class="text-sm text-red-600">エラー数</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-gray-600" id="lastUpdate">-</div>
+                        <div class="text-sm text-gray-600">最終更新</div>
+                    </div>
+                </div>
+
+                <!-- ログ表示エリア -->
+                <div class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-auto max-h-96">
+                    <div id="logContent">ログを読み込み中...</div>
+                </div>
+
+                <!-- 検索・フィルター -->
+                <div class="mt-6">
+                    <div class="flex gap-4 items-center">
+                        <input type="text" id="searchInput" placeholder="ログを検索..." 
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <select id="filterType" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">すべて</option>
+                            <option value="成功">成功</option>
+                            <option value="失敗">失敗</option>
+                            <option value="エラー">エラー</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ログファイルの読み込み
+        async function loadLogFile() {
+            try {
+                const response = await fetch('mail_log.txt');
+                if (!response.ok) {
+                    throw new Error('ログファイルが見つかりません');
+                }
+                const logText = await response.text();
+                return logText;
+            } catch (error) {
+                console.error('ログファイル読み込みエラー:', error);
+                return null;
+            }
+        }
+
+        // ログの解析と表示
+        function parseAndDisplayLog(logText) {
+            if (!logText) {
+                document.getElementById('logContent').innerHTML = '<span class="text-red-400">ログファイルを読み込めませんでした</span>';
+                return;
+            }
+
+            const lines = logText.trim().split('\n').reverse(); // 最新のログを上に表示
+            const logContent = document.getElementById('logContent');
+            
+            let html = '';
+            let totalCount = 0;
+            let successCount = 0;
+            let errorCount = 0;
+
+            lines.forEach(line => {
+                if (line.trim()) {
+                    totalCount++;
+                    
+                    // 成功・失敗の判定
+                    if (line.includes('成功')) {
+                        successCount++;
+                        html += `<div class="text-green-400">${line}</div>`;
+                    } else if (line.includes('失敗') || line.includes('エラー')) {
+                        errorCount++;
+                        html += `<div class="text-red-400">${line}</div>`;
+                    } else {
+                        html += `<div class="text-gray-300">${line}</div>`;
+                    }
+                }
+            });
+
+            logContent.innerHTML = html;
+
+            // 統計情報の更新
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString('ja-JP');
+        }
+
+        // ログの更新
+        async function refreshLog() {
+            const logText = await loadLogFile();
+            parseAndDisplayLog(logText);
+        }
+
+        // ログのクリア
+        async function clearLog() {
+            if (!confirm('ログファイルをクリアしますか？この操作は元に戻せません。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('clear_log.php', { method: 'POST' });
+                if (response.ok) {
+                    alert('ログファイルをクリアしました');
+                    refreshLog();
+                } else {
+                    alert('ログファイルのクリアに失敗しました');
+                }
+            } catch (error) {
+                alert('エラーが発生しました: ' + error.message);
+            }
+        }
+
+        // 検索・フィルター機能
+        function filterLog() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterType = document.getElementById('filterType').value;
+            const logLines = document.querySelectorAll('#logContent > div');
+
+            logLines.forEach(line => {
+                const text = line.textContent.toLowerCase();
+                const matchesSearch = !searchTerm || text.includes(searchTerm);
+                const matchesFilter = !filterType || line.textContent.includes(filterType);
+                
+                line.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
+            });
+        }
+
+        // イベントリスナーの設定
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初期ログ読み込み
+            refreshLog();
+
+            // 更新ボタン
+            document.getElementById('refreshBtn').addEventListener('click', refreshLog);
+
+            // ログクリアボタン
+            document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+
+            // 検索・フィルター
+            document.getElementById('searchInput').addEventListener('input', filterLog);
+            document.getElementById('filterType').addEventListener('change', filterLog);
+
+            // 5分ごとに自動更新
+            setInterval(refreshLog, 5 * 60 * 1000);
+        });
+    </script>
+</body>
+</html> 
