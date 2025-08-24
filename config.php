@@ -4,7 +4,7 @@
 
 // 送信先メールアドレス（ここを変更してください）
 $config = array(
-    'to_email' => 'ritsuki.so.grgyu@docomo.ne.jp', // ← ここに実際のメールアドレスを入力
+    'to_email' => 'bump7107@gmail.com', // ← ここに実際のメールアドレスを入力
     'from_name' => 'エンタメ就活.com',
     'from_email' => 'info@entertainment-shukatsu.com',
     'subject_prefix' => '【エンタメ就活.com】',
