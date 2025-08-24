@@ -69,7 +69,8 @@
 						<span class="text-blue-300" data-oid="_v3:p90">就職活動を支援</span>
 					</h2>
 					<p class="text-xl text-white mb-8 max-w-3xl mx-auto" data-oid="kghh:3m">
-						エンタメ業界を目指す新卒/第二新卒を支援<br><br>
+						<span style="display: none;" id="desktopText">エンタメ業界を目指す新卒/第二新卒を支援<br><br></span>
+						<span style="display: block;" id="mobileText">エンタメ業界を目指す新卒/第二新卒を支援</span>
 						出版・映画・音楽・芸能・ゲーム・アニメ・イベント・テレビ・おもちゃ・Vtuber業界への就職を目指す求職者のためのプラットフォーム<br><br>
 						200名を超えるエンタメ業界支援実績のあるプロフェッショナルがあなたの就活を支援します。
 					</p>
@@ -680,6 +681,26 @@
 		
 		// 初期状態を設定
 		toggleFixedButtons();
+		
+		// レスポンシブテキストの表示制御
+		function toggleResponsiveText() {
+			const desktopText = document.getElementById('desktopText');
+			const mobileText = document.getElementById('mobileText');
+			
+			if (window.innerWidth >= 640) { // sm: 640px以上
+				desktopText.style.display = 'inline';
+				mobileText.style.display = 'none';
+			} else {
+				desktopText.style.display = 'none';
+				mobileText.style.display = 'block';
+			}
+		}
+		
+		// 初期状態を設定
+		toggleResponsiveText();
+		
+		// リサイズ時に再実行
+		window.addEventListener('resize', toggleResponsiveText);
 		
 		// スムーズスクロール機能
 		document.querySelectorAll('a[href^="#"]').forEach(anchor => {
